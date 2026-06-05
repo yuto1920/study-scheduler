@@ -56,3 +56,44 @@ ${lectureText}
   const json = response.choices[0]?.message?.content?.trim();
   return JSON.parse(json || "[]");
 }
+
+/**
+ * 抽出されたPDFテキストから、コーネル式＋トグルリスト向けのマークダウンノートを生成
+ */
+export async function generateNotes(lectureText: string): Promise<string> {
+  const prompt = `
+あなたは専門的な学術研究アシスタントです。提供された【文献テキスト】を分析し、ハルシネーションのない正確な構造化ノートをマークダウン形式で作成してください。
+
+# 制約条件（厳守）
+1. 根拠の限定: 回答は必ず提供された【文献テキスト】のみに基づき、推測や一般論は含めないでください。
+2. 箇条書きの徹底: 文脈の理解を促すため、詳細な説明は箇条書きを活用してください。
+3. コーネル式・トグルリスト用構造: 学習者が「キーワードから答えを思い出す」学習ができるよう、以下の出力フォーマットに厳密に従ってください。
+
+# 出力フォーマット
+## TL;DR
+（講義や資料の核心的な要約を2〜3文で）
+
+## 重要なキーワードと解説
+（重要語句をヘッダーにし、その解説を箇条書きで記載。UI側でトグルリストとして表示されます）
+### [キーワード1]
+- [解説ポイント1]
+- [解説ポイント2]
+
+### [キーワード2]
+- [解説ポイント1]
+
+## 学習の要点・サマリー
+（全体を通した本質的な理解ポイントや、試験で問われやすい論理構造のまとめ）
+
+# 文献テキスト
+${lectureText.substring(0, 15000)} // トークン制限対策のため一部カット
+`;
+
+  const response = await frontier.chat.completions.create({
+    model: "frontier-gpt-4o-lite",
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.2, // ハルシネーションを防ぐため低め
+  });
+
+  return response.choices[0]?.message?.content?.trim() ?? "";
+}

@@ -34,22 +34,43 @@ export default function UploadPage() {
     }
 
     // 2. DBに参照を保存
-    // auth.getUser() で現在のユーザーを取得する想定
     const { data: userData } = await supabase.auth.getUser();
-    const { error: dbErr } = await supabase.from("uploads").insert({
-      user_id: userData.user?.id,
+    const userId = userData.user?.id;
+    const { data: uploadData, error: dbErr } = await supabase.from("uploads").insert({
+      user_id: userId,
       file_path: data?.path,
       file_name: file.name,
-    });
+    }).select().single();
 
-    if (dbErr) {
+    if (dbErr || !uploadData) {
       setStatus("error");
-      setErrorMessage(`データベース保存エラー: ${dbErr.message}`);
+      setErrorMessage(`データベース保存エラー: ${dbErr?.message}`);
       return;
     }
 
-    setStatus("success");
-    setFile(null);
+    // 3. APIを呼び出してノート生成
+    setStatus("generating_notes");
+    try {
+      const res = await fetch("/api/generate-notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uploadId: uploadData.id,
+          filePath: data.path,
+          userId: userId,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("ノート生成APIエラー");
+      }
+
+      setStatus("success");
+      setFile(null);
+    } catch (err: any) {
+      setStatus("error");
+      setErrorMessage(`ノート生成に失敗しました: ${err.message}`);
+    }
   };
 
   return (
@@ -77,16 +98,18 @@ export default function UploadPage() {
 
       <button
         onClick={handleUpload}
-        disabled={!file || status === "uploading"}
+        disabled={!file || status === "uploading" || status === "generating_notes"}
         className="mt-6 w-full bg-indigo-600 text-white font-semibold py-3 rounded-xl hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {status === "uploading" ? "アップロード中..." : "アップロードして解析開始"}
+        {status === "uploading" ? "ファイルをアップロード中..." : 
+         status === "generating_notes" ? "AIがノートを生成中（数分かかる場合があります）..." : 
+         "アップロードしてAIノート生成"}
       </button>
 
       {status === "success" && (
         <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg flex items-center gap-2">
           <CheckCircle className="w-5 h-5" />
-          <span>アップロードが完了しました！AIが解析を開始します。</span>
+          <span>生成が完了しました！サイドバーの「学習ノート」から確認してください。</span>
         </div>
       )}
 

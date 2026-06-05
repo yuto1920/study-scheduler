@@ -17,6 +17,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <UploadCloud className="w-5 h-5" />
             資料アップロード
           </Link>
+          <Link href="/dashboard/notes" className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+            <BookOpen className="w-5 h-5" />
+            学習ノート
+          </Link>
           <Link href="/dashboard/schedule" className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
             <Calendar className="w-5 h-5" />
             スケジュール連携
