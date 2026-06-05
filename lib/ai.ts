@@ -1,11 +1,9 @@
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai";
 
-const config = new Configuration({
+export const frontier = new OpenAI({
   apiKey: process.env.FRONTIER_API_KEY,
-  basePath: "https://api.frontier.ai/v1",
+  baseURL: "https://api.frontier.ai/v1",
 });
-
-export const frontier = new OpenAIApi(config);
 
 /**
  * 生成されたスケジュール（週単位）を返す
@@ -29,12 +27,12 @@ ${lectureTexts.join("\n---\n")}
 Class schedule (ISO 8601):
 ${JSON.stringify(calendarEvents, null, 2)}
 `;
-  const response = await frontier.createChatCompletion({
+  const response = await frontier.chat.completions.create({
     model: "frontier-gpt-4o-lite",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.3,
   });
-  return response.data.choices?.[0]?.message?.content?.trim() ?? "";
+  return response.choices[0]?.message?.content?.trim() ?? "";
 }
 
 /**
@@ -50,11 +48,11 @@ Return a JSON array:
 Lecture text:
 ${lectureText}
 `;
-  const response = await frontier.createChatCompletion({
+  const response = await frontier.chat.completions.create({
     model: "frontier-gpt-4o-lite",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.4,
   });
-  const json = response.data.choices?.[0]?.message?.content?.trim();
+  const json = response.choices[0]?.message?.content?.trim();
   return JSON.parse(json || "[]");
 }
