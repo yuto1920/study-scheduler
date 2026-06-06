@@ -1,8 +1,7 @@
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 
-export const frontier = new OpenAI({
-  apiKey: process.env.FRONTIER_API_KEY,
-  baseURL: "https://api.frontier.ai/v1",
+export const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY || process.env.FRONTIER_API_KEY,
 });
 
 /**
@@ -27,33 +26,39 @@ ${lectureTexts.join("\n---\n")}
 Class schedule (ISO 8601):
 ${JSON.stringify(calendarEvents, null, 2)}
 `;
-  const response = await frontier.chat.completions.create({
-    model: "frontier-gpt-4o-lite",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.3,
+  const response = await ai.models.generateContent({
+    model: "gemini-3.5-flash",
+    contents: prompt,
+    config: {
+      temperature: 0.3,
+    },
   });
-  return response.choices[0]?.message?.content?.trim() ?? "";
+  return response.text?.trim() ?? "";
 }
 
 /**
- * 与えられた教材テキストから 5-10 個の多肢選択問題を生成
+ * 与えられた複数教材テキスト（要約）から 5-10 個の多肢選択問題を生成
  */
-export async function generateQuiz(lectureText: string): Promise<any[]> {
+export async function generateQuiz(lectureTexts: string[]): Promise<any[]> {
   const prompt = `
-Create 5-10 multiple-choice questions (A-D) from the following lecture text.
-For each question also provide the correct answer and three plausible distractors.
-Return a JSON array:
-[{ "question": "...", "options": ["A", "B", "C", "D"], "answer": "B" }, …]
+以下の複数の授業資料の要約テキストをもとに、5〜10問の多肢選択問題（4択）を日本語で作成してください。
+それぞれの問題には、具体的なテキストによる正解の選択肢と、もっともらしい不正解の選択肢3つを含めてください。
+「A」や「B」のような記号ではなく、選択肢そのものの内容（テキスト）を含めてください。
+結果は以下のJSON配列形式のみで出力してください（マークダウンのコードブロックは不要です）:
+[{ "question": "問題文...", "options": ["選択肢のテキスト1", "選択肢のテキスト2", "選択肢のテキスト3", "選択肢のテキスト4"], "answer": "正解の選択肢のテキスト（optionsの中に含まれるものと完全一致）" }, ...]
 ---
-Lecture text:
-${lectureText}
+授業要約データ:
+${lectureTexts.join("\n\n---\n\n")}
 `;
-  const response = await frontier.chat.completions.create({
-    model: "frontier-gpt-4o-lite",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.4,
+  const response = await ai.models.generateContent({
+    model: "gemini-3.5-flash",
+    contents: prompt,
+    config: {
+      temperature: 0.4,
+      responseMimeType: "application/json",
+    },
   });
-  const json = response.choices[0]?.message?.content?.trim();
+  const json = response.text?.trim();
   return JSON.parse(json || "[]");
 }
 
@@ -68,6 +73,7 @@ export async function generateNotes(lectureText: string): Promise<string> {
 1. 根拠の限定: 回答は必ず提供された【文献テキスト】のみに基づき、推測や一般論は含めないでください。
 2. 箇条書きの徹底: 文脈の理解を促すため、詳細な説明は箇条書きを活用してください。
 3. コーネル式・トグルリスト用構造: 学習者が「キーワードから答えを思い出す」学習ができるよう、以下の出力フォーマットに厳密に従ってください。
+4. プレーンテキストの使用: 数式や記号に LaTeX（$K-1$ のような $ 記号による囲み）を使用せず、必ず自然なプレーンテキストで出力してください。
 
 # 出力フォーマット
 ## TL;DR
@@ -86,14 +92,16 @@ export async function generateNotes(lectureText: string): Promise<string> {
 （全体を通した本質的な理解ポイントや、試験で問われやすい論理構造のまとめ）
 
 # 文献テキスト
-${lectureText.substring(0, 15000)} // トークン制限対策のため一部カット
+${lectureText.substring(0, 3000)} // 無料枠のトークン制限（429エラー）を回避するため、最初の3000文字のみ抽出
 `;
 
-  const response = await frontier.chat.completions.create({
-    model: "frontier-gpt-4o-lite",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.2, // ハルシネーションを防ぐため低め
+  const response = await ai.models.generateContent({
+    model: "gemini-3.5-flash",
+    contents: prompt,
+    config: {
+      temperature: 0.2, // ハルシネーションを防ぐため低め
+    },
   });
 
-  return response.choices[0]?.message?.content?.trim() ?? "";
+  return response.text?.trim() ?? "";
 }

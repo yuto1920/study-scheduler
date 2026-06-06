@@ -1,13 +1,33 @@
 import { NextResponse } from "next/server";
 import { supabaseService } from "@/lib/supabase";
 import { generateNotes } from "@/lib/ai";
-import pdfParse from "pdf-parse";
+import PDFParser from "pdf2json";
+
+// PDFのバッファからテキストを抽出するヘルパー関数
+function extractTextFromPDF(buffer: Buffer): Promise<string> {
+  return new Promise((resolve, reject) => {
+    // pdf2jsonの初期化 (needRawText = 1 を指定してテキストのみ抽出)
+    const pdfParser = new PDFParser(null, true);
+    
+    pdfParser.on("pdfParser_dataError", (errData: any) => {
+      reject(errData.parserError);
+    });
+    
+    pdfParser.on("pdfParser_dataReady", () => {
+      // 抽出した生テキストを取得
+      const rawText = pdfParser.getRawTextContent();
+      resolve(rawText);
+    });
+    
+    pdfParser.parseBuffer(buffer);
+  });
+}
 
 export async function POST(req: Request) {
   try {
-    const { uploadId, filePath, userId } = await req.json();
+    const { uploadId, filePath, userId, courseId } = await req.json();
 
-    if (!uploadId || !filePath || !userId) {
+    if (!uploadId || !filePath || !userId || !courseId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -21,11 +41,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Failed to download file: ${downloadError?.message}` }, { status: 500 });
     }
 
-    // 2. pdf-parse でテキスト抽出
+    // 2. pdf2json でテキスト抽出
     const arrayBuffer = await fileData.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const pdfData = await pdfParse(buffer);
-    const extractedText = pdfData.text;
+    
+    let extractedText = "";
+    try {
+      extractedText = await extractTextFromPDF(buffer);
+    } catch (parseErr: any) {
+      console.error("PDF Parsing Error:", parseErr);
+      return NextResponse.json({ error: `Failed to parse PDF file: ${parseErr.message || String(parseErr)}` }, { status: 500 });
+    }
 
     if (!extractedText || extractedText.trim() === "") {
       return NextResponse.json({ error: "No text could be extracted from the PDF" }, { status: 400 });
@@ -38,6 +64,7 @@ export async function POST(req: Request) {
     const { error: insertError } = await supabase.from("notes").insert({
       user_id: userId,
       upload_id: uploadId,
+      course_id: courseId,
       content: generatedNotes,
     });
 
@@ -48,6 +75,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, notes: generatedNotes });
   } catch (error: any) {
     console.error("Generate Notes Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: error.message || String(error) }, { status: 500 });
   }
 }

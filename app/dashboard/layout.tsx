@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Calendar, Settings, UploadCloud } from "lucide-react";
+import { Book, BookOpen, Calendar, Settings, UploadCloud } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +13,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         
         <nav className="flex-1 space-y-2">
+          <Link href="/dashboard/courses" className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+            <Book className="w-5 h-5" />
+            授業（コース）管理
+          </Link>
           <Link href="/dashboard/upload" className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
             <UploadCloud className="w-5 h-5" />
             資料アップロード

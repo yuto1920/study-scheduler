@@ -15,7 +15,7 @@ export default function LandingPage() {
         <nav className="flex items-center gap-6 font-medium">
           <Link href="#features" className="hover:text-indigo-500 transition">機能</Link>
           <Link href="#pricing" className="hover:text-indigo-500 transition">料金</Link>
-          <Link href="/dashboard/upload" className="bg-indigo-600 text-white px-5 py-2 rounded-full hover:bg-indigo-700 transition shadow-lg shadow-indigo-500/20">
+          <Link href="/login" className="bg-indigo-600 text-white px-5 py-2 rounded-full hover:bg-indigo-700 transition shadow-lg shadow-indigo-500/20">
             無料で試す
           </Link>
         </nav>
@@ -44,10 +44,10 @@ export default function LandingPage() {
         </p>
         
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="/dashboard/upload" className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white text-lg font-bold px-8 py-4 rounded-full hover:bg-indigo-700 hover:scale-105 transition transform shadow-xl shadow-indigo-500/30">
+          <Link href="/login" className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white text-lg font-bold px-8 py-4 rounded-full hover:bg-indigo-700 hover:scale-105 transition transform shadow-xl shadow-indigo-500/30">
             さっそく無料で始める <ArrowRight className="w-5 h-5" />
           </Link>
-          <Link href="/dashboard/upload" className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 text-lg font-bold px-8 py-4 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+          <Link href="/login" className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 text-lg font-bold px-8 py-4 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 transition">
             サインアップ
           </Link>
         </div>
@@ -111,7 +111,7 @@ export default function LandingPage() {
               <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-500" /> スケジュール生成 1週間分</li>
               <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-500" /> クイズ生成 月10回まで</li>
             </ul>
-            <Link href="/dashboard/upload" className="block text-center w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-bold py-3 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+            <Link href="/login" className="block text-center w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-bold py-3 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition">
               無料で始める
             </Link>
           </div>
